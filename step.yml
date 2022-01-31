@@ -1,0 +1,70 @@
+#
+# A couple of useful guides & docs:
+#
+# - Main Bitrise CLI docs: https://github.com/bitrise-io/bitrise/tree/master/_docs
+# - Step Development Guideline: https://github.com/bitrise-io/bitrise/blob/master/_docs/step-development-guideline.md
+# - Bitrise.yml format spec: https://github.com/bitrise-io/bitrise/blob/master/_docs/bitrise-yml-format-spec.md
+# - Bitrise docs: http://devcenter.bitrise.io/
+# - Bitrise CLI guides: http://devcenter.bitrise.io/bitrise-cli/
+
+title: |-
+  macOS Ruby Setup
+summary: |
+  Make sure the Ruby environment is set up properly.
+description: |
+  If needed, install the version of Ruby wanted and the required gems, and make sure they all get cached.
+website: https://github.com/cookpad/bitrise-step-macos-ruby-setup
+source_code_url: https://github.com/cookpad/bitrise-step-macos-ruby-setup
+support_url: https://github.com/cookpad/bitrise-step-macos-ruby-setup/issues
+host_os_tags:
+  - osx-10.10
+
+# If this step should be available only for certain project types
+# just uncomment this `project_type_tags` section and include all the
+# project types supported by the step. If the step can be used for all
+# project types then you can just remove this section.
+# If no `project_type_tags` specified (or specified as an empty array)
+# that means the step can be used for any project type.
+# You can find more information about project type tags in the Step Development Guideline:
+# https://github.com/bitrise-io/bitrise/blob/master/_docs/step-development-guideline.md
+#
+# project_type_tags:
+#   - ios
+#   - macos
+#   - android
+#   - xamarin
+#   - react-native
+#   - cordova
+#   - ionic
+
+# Type tags are used for categorizing steps, for easier step discovery in Step Libraries.
+# You can find more information about type tags in the Step Development Guideline:
+# https://github.com/bitrise-io/bitrise/blob/master/_docs/step-development-guideline.md
+type_tags:
+  - installer
+
+is_requires_admin_user: false
+is_always_run: false
+is_skippable: false
+run_if: ""
+
+deps:
+  brew:
+  - name: rbenv
+  - name: ruby-build
+
+toolkit:
+  bash:
+    entry_file: step.sh
+
+inputs:
+  - require_latest: "no"
+    opts:
+      title: "Require the latest matching version of Ruby?"
+      description: |
+        If the Ruby version specified does not have a patch version number, by
+        default the latest installed version matching will be used, but if this
+        is set to "yes", try to use the latest matching version available.
+      value_options:
+        - "no"
+        - "yes"
