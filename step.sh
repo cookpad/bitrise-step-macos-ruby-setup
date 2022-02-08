@@ -84,6 +84,12 @@ pushd "$rbenv_versions/$version_wanted" > /dev/null
 ruby_path=$(pwd -P)
 popd > /dev/null
 
+# Make sure the version of Bundler used by the project is installed.
+if [ -f Gemfile.lock ]; then
+  bundler_version_used=$(grep -A1 "^BUNDLED WITH" Gemfile.lock | tail -1 | sed -e "s/^[[:space:]]*//g")
+  gem install --conservative --no-doc --version "$bundler_version_used" bundler
+fi
+
 # Even if we use a version of Ruby from the VM image, we want to keep the Gems
 # installed, and we do not want a script too complicated, so cache the whole
 # Ruby installation.
