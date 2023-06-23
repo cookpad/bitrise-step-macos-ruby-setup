@@ -1,32 +1,31 @@
 #!/usr/bin/env bash
 set -e
 
-if ! which rbenv &> /dev/null; then
-  echo "rbenv is required" >&2
+if ! which asdf &> /dev/null; then
+  echo "asdf is required" >&2
   exit 1
 fi
 
-if [ -n "$RBENV_VERSION" ]; then
-  version_wanted="$RBENV_VERSION"
-elif [ -f ".ruby-version" ]; then
+if [ -f ".ruby-version" ]; then
   version_wanted=$(cat .ruby-version)
 else
   echo "The Ruby version to use should be specified with a .ruby-version file" >&2
-  echo "in the current directory, or the \$RBENV_VERSION environment variable." >&2
+  echo "in the current directory." >&2
   exit 1
 fi
 
-rbenv_root=$(rbenv root)
-rbenv_versions="$rbenv_root/versions"
+# We want asdf to look at `.ruby-version` files.
+echo "legacy_version_file = yes" > "$HOME/.asdfrc"
+
+asdf_root="$HOME/.asdf"
+asdf_ruby_installs="$asdf_root/installs/ruby"
 
 latest_matching_version_installed() {
-  local escaped_version_wanted=$(echo "$1" | sed 's/\./\\./g')
-  rbenv versions --bare 2>&- | sort -rV | grep "^${escaped_version_wanted}\b" | head -1
+  asdf list ruby "$1" | sed 's/^ *\**//' | grep "^[0-9.]\+$" | sort -rV | head -1
 }
 
 latest_matching_version_installable() {
-  local escaped_version_wanted=$(echo "$1" | sed 's/\./\\./g')
-  rbenv install --list-all 2>&- | sort -rV | grep "^${escaped_version_wanted}\b" | head -1
+  asdf list all ruby "$1" | grep "^[0-9.]\+$" | sort -rV | head -1
 }
 
 update_ruby_build() {
@@ -47,9 +46,6 @@ if [ "$require_latest" = "1" ] || [ "$require_latest" = "true" ] || [ "$require_
   fi
 
 # Do we really need to do something?
-# Note that instead of running `ruby -v` I was originally trying to run `rbenv version`,
-# but it seems on the Bitrise machines `rbenv version` doesn't exit in error when
-# the Ruby version selected cannot be found.
 elif ! ruby -v &> /dev/null; then
   matching_version=$(latest_matching_version_installed "$version_wanted")
   if [ -z "$matching_version" ]; then
@@ -68,9 +64,10 @@ fi
 
 if [ -n "$matching_version" ]; then
   echo "Using Ruby $matching_version"
-  rbenv install --skip-existing "$matching_version"
+  asdf install ruby "$matching_version"
   if [ "$version_wanted" != "$matching_version" ]; then
-    ln -snf "$matching_version" "$rbenv_versions/$version_wanted"
+    ln -snf "$matching_version" "$asdf_ruby_installs/$version_wanted"
+    asdf reshim ruby "$version_wanted"
   fi
 else
   echo "Using Ruby $version_wanted"
@@ -79,7 +76,7 @@ fi
 # Make sure everything worked.
 ruby -v > /dev/null
 
-pushd "$rbenv_versions/$version_wanted" > /dev/null
+pushd "$asdf_ruby_installs/$version_wanted" > /dev/null
 # `pwd -P` resolves symbolic links.
 ruby_path=$(pwd -P)
 popd > /dev/null

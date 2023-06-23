@@ -50,7 +50,6 @@ run_if: ""
 
 deps:
   brew:
-  - name: rbenv
   - name: ruby-build
 
 toolkit:
